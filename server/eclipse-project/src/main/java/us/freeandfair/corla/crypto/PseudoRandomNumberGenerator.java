@@ -79,8 +79,8 @@ public class PseudoRandomNumberGenerator {
    * 
    * @param the_seed The seed to generate random numbers from
    * @param the_with_replacement True if duplicates can be generated
-   * @param the_minimum The minimum value to generate
-   * @param the_maximum The maximum value to generate
+   * @param the_minimum The minimum value to generate, inclusive
+   * @param the_maximum The maximum value to generate, inclusive
    */
   public PseudoRandomNumberGenerator(final String the_seed, final boolean the_with_replacement,
                                      final int the_minimum, final int the_maximum) {
@@ -132,7 +132,7 @@ public class PseudoRandomNumberGenerator {
    * 
    * @param
    */
-  public void generateNext() {
+  private void generateNext() {
     my_count++;
     assert my_with_replacement || my_count <= my_maximum_index;
 

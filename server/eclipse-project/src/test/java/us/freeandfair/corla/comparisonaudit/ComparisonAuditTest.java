@@ -16,13 +16,15 @@
 
 package us.freeandfair.corla.comparisonaudit;
 
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.testng.annotations.Test;
+
+import us.freeandfair.corla.comparisonaudit.AuditRunner.CVRAudit;
 
 /**
  * Tests for the ComparisonAudit class.
@@ -30,24 +32,20 @@ import org.testng.annotations.Test;
 @SuppressWarnings("PMD.AtLeastOneConstructor")
 public class ComparisonAuditTest {
 
-  /*
-   * no longer a valid test
-   * 
-   * @Test() public void testnminfromrates() {
-   * assertEquals(ComparisonAudit.nminfromrates(0.05, 1.03905, .2, .001, .0001,
-   * .001, .0001, true, false), 34); }
-   */
-
   /**
    * A minimal test.
    */
   @Test()
   public void testAudit() {
-    final ComparisonAudit comparison_audit = new ComparisonAudit(100, BigDecimal.valueOf(.05));
+    HashSet<String> audit_set =new HashSet<>();
+    audit_set.add("Contest");
+    final ComparisonAudit comparison_audit = new ComparisonAudit(100, BigDecimal.valueOf(.05), audit_set);
     comparison_audit.addContest("Contest", 1, new HashMap<>());
     assertTrue(comparison_audit.addCandidateVotes("Contest", "Candidate1", 60));
     assertTrue(comparison_audit.addCandidateVotes("Contest", "Candidate2", 40));
-    assertTrue(comparison_audit.auditComplete(34, 0, 0, 0, 0));
-    assertFalse(comparison_audit.auditComplete(34, 1, 0, 0, 0));
+    for(int i=0; i<34; i++) {
+      comparison_audit.addAuditedBallot("Contest", CVRAudit.NEUTRAL);
+    }
+    assertTrue(comparison_audit.auditComplete());
   }
 }
