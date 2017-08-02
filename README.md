@@ -25,21 +25,19 @@ System Documentation
 ====================
 
 Documentation about this project and the Colorado RLA system includes:
-* a [tutorial](docs/20_tutorial.md),
+* a [tutorial (a.k.a. Run Book](docs/20_tutorial.md),
 * a [description of our development process and methodology](docs/35_methodology.md),
 * a [developer document](docs/25_developer.md) that contains our
   developer instructions, including the project history, technologies
   in use, dependencies, how to build the system, how we perform
-  quality assurance, how we perform validation and verification, and
+  quality assurance, and
   what the build status of the project is,
 * the [system requirements](docs/50_requirements.md),
-* the [formal system specification](docs/55_specification.md),
+* the [formal system specification](docs/55_specification.md), including a User Manual
 * the [means by which we validate and verify the system](docs/40_v_and_v.md),
 * a [glossary](docs/89_glossary.md) of the domain terminology used in the system,
-* a full [bibliography](docs/99_bibliography.md) for the project is
-  available, including artifacts which we are permitted to locally
-  mirror, is found in the [docs/bibliography](docs/99_bibliography.md)
-  directory,
+* a full [bibliography](docs/99_bibliography.md), including artifacts which we are permitted to locally
+  mirror
 * a [document describing how we perform project management](docs/30_project_management.md),
 * the [license](#license) under which this software is made available, and
 * all [contributors](#contributors) to the design and development of
