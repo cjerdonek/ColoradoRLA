@@ -7,7 +7,11 @@ TODO: display errors nicely.
 
 from __future__ import print_function
 import sys
+import json
+import logging
 import requests
+
+import sampler
 from server_test import *
 
 
@@ -81,6 +85,48 @@ def upload_manifest(baseurl, s, filename, sha256):
         r = s.post(baseurl + path,
                           files={'bmi_file': f}, data=payload)
     print(r, path)
+
+
+def get_cvrs(baseurl, s):
+    "Return all cvrs uploaded by any county"
+
+    r = s.get("%s/cvr" % baseurl)
+    cvrs = r.json()
+
+    return cvrs
+
+
+def publish_ballots_to_audit(seed, cvrs):
+    """Return lists by county of ballots to audit.
+    """
+
+    county_ids = set(cvr['county_id'] for cvr in cvrs)
+
+    ballots_to_audit = []
+    for county_id in county_ids:
+        county_cvrs = sorted( (cvr for cvr in cvrs if cvr['county_id'] == county_id),
+                              key=lambda cvr: "%s-%s-%s" % (cvr['scanner_id'], cvr['batch_id'], cvr['record_id']))
+        N = len(county_cvrs)
+        # n is based on auditing Regent contest.
+        # TODO: perhaps calculate from margin etc
+        n = 11
+        seed = "01234567890123456789"
+
+        _, new_list = sampler.generate_outputs(n, True, 0, N, seed, False)
+
+        logging.debug("Random selections, N=%d, n=%d, seed=%s: %s" %
+                      (N, n, seed, new_list))
+
+        selected = []
+        for i, cvr in enumerate(county_cvrs):
+            if i in new_list:
+                cvr['record_type'] = 'AUDITOR_ENTERED'
+                selected.append(cvr)
+                logging.debug("selected cvr %d: %d %s" % (i, cvr['id'], cvr['imprinted_id']))
+
+        ballots_to_audit.append([county_id, selected])
+
+    return ballots_to_audit
 
 
 def upload_acvr(baseurl, s, filename):
@@ -167,13 +213,21 @@ if __name__ == "__main__":
 
     r = test_endpoint_get(base, state_s, "/publish-data-to-audit")
 
+    seed = "01234567890123456789"
+
     r = test_endpoint_json(base, state_s, "/random-seed",
-                           {'seed': "01234567890123456789"})
+                           {'seed': seed})
     r = test_endpoint_get(base, state_s, "/ballots-to-audit")
-    
+
+    cvrs = get_cvrs(base, county_s1)
+
+    print(json.dumps(publish_ballots_to_audit(seed, cvrs), indent=2))
+
     r = test_endpoint_get(base, county_s1, "/county-dashboard")
     # r = test_endpoint_get(base, county_s1, "/audit-board-asm-state")
     # r = test_endpoint_json(base, county_s1, "/audit-board-dashboard", {})
+
+    # FIXME: figure out which one to upload next!
     upload_acvr(base, county_s1, "acvr.json")
 
     r = test_endpoint_get(base, county_s1, "/county-dashboard")
