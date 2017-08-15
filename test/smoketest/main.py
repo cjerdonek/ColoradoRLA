@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
     r = test_endpoint_json(base, state_s, "/random-seed",
                            {'seed': "01234567890123456789"})
-    r = test_endpoint_json(base, state_s, "/ballots-to-audit", {})
+    r = test_endpoint_get(base, state_s, "/ballots-to-audit")
     
     r = test_endpoint_get(base, county_s1, "/county-dashboard")
     # r = test_endpoint_get(base, county_s1, "/audit-board-asm-state")
