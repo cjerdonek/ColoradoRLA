@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Smoketest the RLA server
-TODO: get server_sequence working and displaying errors
-nicely, rather than having the user run pytest server_test.py
+Run thru a simple server_sequence.
+
+TODO: display errors nicely.
 """
 
 from __future__ import print_function
@@ -26,6 +27,38 @@ def county_login(baseurl, s, county_id):
     r = s.post(baseurl + path,
                data={'username': 'countyadmin%d' % county_id, 'password': '', 'second_factor': ''})
     print(r, path)
+
+
+def test_endpoint_json(baseurl, s, path, data):
+    "Do a generic test of an endpoint that posts the given data to the given path"
+
+    r = s.post(baseurl + path, json=data)
+    print(r, path, r.text)
+    return r
+
+
+def test_endpoint_get(baseurl, s, path):
+    "Do a generic test of an endpoint that gets the given path"
+
+    r = s.get(baseurl + path)
+    print(r, path, r.text)
+    return r
+
+
+def test_endpoint_bytes(baseurl, s, path, data):
+    "Do a generic test of an endpoint that posts the given data to the given path"
+
+    r = s.post(baseurl + path, data)
+    print(r, path, r.text)
+    return r
+
+
+def test_endpoint_post(baseurl, s, path, data):
+    "Do a generic test of an endpoint that posts the given data to the given path"
+
+    r = s.post(baseurl + path, data)
+    print(r, path, r.text)
+    return r
 
 
 def upload_cvrs(baseurl, s, filename, sha256):
@@ -95,14 +128,63 @@ if __name__ == "__main__":
     else:
         base = "http://localhost:8888"
 
-    s = requests.Session()
+    state_s = requests.Session()
+    state_login(base, state_s)
 
-    state_login(base, s)
+    county_s1 = requests.Session()
+    county_login(base, county_s1, 3)
 
-    county_login(base, s, 3)
+    r = test_endpoint_json(base, state_s, "/risk-limit-comp-audits", {"risk_limit": 0.1})
 
-    upload_files(base, s)
+    # Alternatives that work, FWIW
+    # r = test_endpoint_post(base, state_s, "/risk-limit-comp-audits", '{"risk_limit": "0.1"}')
+    # r = test_endpoint_bytes(base, state_s, "/risk-limit-comp-audits", '{"risk_limit": "0.1"}')
 
-    upload_acvr(base, s, "acvr.json")
+    r = test_endpoint_json(base, county_s1, "/audit-board",
+                           [{"first_name": "Mary",
+                             "last_name": "Doe",
+                             "political_party": "Democrat"},
+                            {"first_name": "John",
+                             "last_name": "Doe",
+                             "political_party": "Republican"}])
+
+    upload_files(base, county_s1)
+
+    # Replace that with this later - or make test_endpoint_file method?
+    # r = test_endpoint_post(base, county_s1, "/upload-ballot-manifest", ...)
+    # r = test_endpoint_post(base, county_s1, "/upload-cvr-export", ...)
+
+    # We need a valid contest to audit. Pick the first one.
+    r = test_endpoint_get(base, county_s1, "/contest")
+    contests = r.json()
+    print(contests)
+    contest_to_audit = contests[0]['id']
+
+    r = test_endpoint_json(base, state_s, "/select-contests",
+                           [{"contest": contest_to_audit,
+                             "reason": "COUNTY_WIDE_CONTEST",
+                             "audit": "COMPARISON"}])
+
+    r = test_endpoint_get(base, state_s, "/publish-data-to-audit")
+
+    r = test_endpoint_json(base, state_s, "/random-seed",
+                           {'seed': "01234567890123456789"})
+    r = test_endpoint_json(base, state_s, "/ballots-to-audit", {})
+    
+    r = test_endpoint_get(base, county_s1, "/county-dashboard")
+    # r = test_endpoint_get(base, county_s1, "/audit-board-asm-state")
+    # r = test_endpoint_json(base, county_s1, "/audit-board-dashboard", {})
+    upload_acvr(base, county_s1, "acvr.json")
+
+    r = test_endpoint_get(base, county_s1, "/county-dashboard")
+
+    # r = test_endpoint_json(base, county_s1, "/upload-audit-cvr", {})
+
+    # LOOP
+
+    r = test_endpoint_json(base, county_s1, "/intermediate-audit-report", {})
+    r = test_endpoint_json(base, county_s1, "/audit-report", {})
+
+    r = test_endpoint_json(base, state_s, "/publish-report", {})
 
     # server_sequence()
